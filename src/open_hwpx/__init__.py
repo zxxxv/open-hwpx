@@ -47,7 +47,13 @@ from .styles import (
     get_theme,
     preset_names,
 )
-from .fonts import embed_font, register_font_file, registered_fonts
+from .fonts import (
+    available_ofl_fonts,
+    embed_font,
+    ensure_font,
+    register_font_file,
+    registered_fonts,
+)
 from .read import RDocument, load, load_document, read_document
 from .render_html import render_html
 
@@ -94,4 +100,6 @@ __all__ = [
     "register_font_file",
     "registered_fonts",
     "embed_font",
+    "ensure_font",
+    "available_ofl_fonts",
 ]

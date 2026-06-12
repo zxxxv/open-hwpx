@@ -14,6 +14,7 @@ OFL 폰트(나눔글꼴, 본고딕/본명조=Noto Sans/Serif KR, Pretendard 등)
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 _HH = "{http://www.hancom.co.kr/hwpml/2011/head}"
@@ -21,6 +22,23 @@ _MEDIA = {"ttf": "application/x-font-ttf", "otf": "application/x-font-otf"}
 
 #: face 이름 → 폰트 파일 경로
 _REGISTRY: dict[str, str] = {}
+
+_GF = "https://github.com/google/fonts/raw/main/ofl"
+#: 자동 다운로드 가능한 OFL(임베드 허용) 한글 폰트 — 요청 이름 → URL.
+OFL_FONTS: dict[str, str] = {
+    "나눔고딕": f"{_GF}/nanumgothic/NanumGothic-Regular.ttf",
+    "NanumGothic": f"{_GF}/nanumgothic/NanumGothic-Regular.ttf",
+    "나눔명조": f"{_GF}/nanummyeongjo/NanumMyeongjo-Regular.ttf",
+    "NanumMyeongjo": f"{_GF}/nanummyeongjo/NanumMyeongjo-Regular.ttf",
+    "본고딕": f"{_GF}/notosanskr/NotoSansKR%5Bwght%5D.ttf",
+    "Noto Sans KR": f"{_GF}/notosanskr/NotoSansKR%5Bwght%5D.ttf",
+    "본명조": f"{_GF}/notoserifkr/NotoSerifKR%5Bwght%5D.ttf",
+    "Noto Serif KR": f"{_GF}/notoserifkr/NotoSerifKR%5Bwght%5D.ttf",
+    "Gothic A1": f"{_GF}/gothica1/GothicA1-Regular.ttf",
+    "도현": f"{_GF}/dohyeon/DoHyeon-Regular.ttf",
+    "Do Hyeon": f"{_GF}/dohyeon/DoHyeon-Regular.ttf",
+}
+_FONT_MAGIC = (b"\x00\x01\x00\x00", b"OTTO", b"true", b"ttcf")
 
 
 def register_font_file(face_name: str, font_path: str) -> None:
@@ -38,6 +56,57 @@ def registered_fonts() -> dict[str, str]:
 
 def clear_registry() -> None:
     _REGISTRY.clear()
+
+
+def available_ofl_fonts() -> list[str]:
+    """자동 다운로드 가능한 OFL 폰트 이름 목록."""
+    return sorted(OFL_FONTS)
+
+
+def _cache_dir() -> Path:
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+    else:
+        base = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
+    path = Path(base) / "open_hwpx" / "fonts"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _download(url: str, dst: Path) -> None:
+    import urllib.request
+
+    req = urllib.request.Request(url, headers={"User-Agent": "open-hwpx"})
+    with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310 - 고정 OFL URL
+        data = resp.read()
+    if not data[:4] in _FONT_MAGIC and not data[:4] == b"wOFF":
+        raise ValueError(f"다운로드한 파일이 폰트(TTF/OTF)가 아닙니다: {url}")
+    dst.write_bytes(data)
+
+
+def ensure_font(name: str, *, register: bool = True) -> str:
+    """OFL 폰트를 (캐시에) 다운로드하고 ``register_font_file`` 로 등록한다 → 경로 반환.
+
+    ``register_font_file`` 로 직접 파일을 넣지 않아도, 목록(:func:`available_ofl_fonts`)에 있는
+    폰트는 이 한 줄로 동봉까지 준비된다::
+
+        import open_hwpx as hwpx
+        hwpx.ensure_font("나눔고딕")     # 1회 다운로드+등록 → 이후 생성물에 임베드
+    """
+    url = OFL_FONTS.get(name)
+    if url is None:
+        raise KeyError(
+            f"OFL 자동 다운로드 목록에 없습니다: {name!r}. "
+            f"가능: {available_ofl_fonts()} — 또는 register_font_file 로 파일을 직접 등록하세요."
+        )
+    ext = ".otf" if url.lower().endswith(".otf") else ".ttf"
+    safe = "".join(c for c in name if c.isalnum() or c in "-_") or "font"
+    dst = _cache_dir() / f"{safe}{ext}"
+    if not dst.exists() or dst.stat().st_size == 0:
+        _download(url, dst)
+    if register:
+        register_font_file(name, str(dst))
+    return str(dst)
 
 
 def embed_font_binary(doc, data: bytes, fmt: str = "ttf") -> str:

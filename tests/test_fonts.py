@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import io
+import os
 import warnings
+from pathlib import Path
 
 from lxml import etree
 
@@ -106,3 +108,29 @@ def test_embed_font_posthoc(tmp_path):
     ]
     assert nodes and nodes[0] == "1"
     assert doc.validate().ok
+
+
+def test_available_ofl_fonts_and_unknown_raises():
+    names = _fonts.available_ofl_fonts()
+    assert "나눔고딕" in names and "Noto Sans KR" in names
+    import pytest as _pytest
+
+    with _pytest.raises(KeyError):
+        _fonts.ensure_font("존재하지않는폰트XYZ")  # 목록에 없으면(다운로드 전) 에러
+
+
+@pytest.mark.skipif(
+    not os.environ.get("OPEN_HWPX_NETWORK_TESTS"),
+    reason="네트워크 테스트(OPEN_HWPX_NETWORK_TESTS=1 로 활성화)",
+)
+def test_ensure_font_downloads_and_embeds(tmp_path, monkeypatch):
+    monkeypatch.setattr(_fonts, "_cache_dir", lambda: tmp_path)
+    path = _fonts.ensure_font("나눔고딕")
+    assert Path(path).exists() and Path(path).stat().st_size > 100_000
+    assert _fonts.registered_fonts().get("나눔고딕") == path
+    # 등록됐으니 생성물에 임베드된다
+    theme = GOV_KOREAN.override(body=FontSpec("나눔고딕", 11.0))
+    r = Report.new(title="T", organization="O", date="2026-01-01", theme=theme)
+    r.add_chapter("장").add(Paragraph(Run("본문")))
+    nodes = _font_nodes(r.to_bytes(), "나눔고딕")
+    assert nodes and nodes[0][0] == "1"
