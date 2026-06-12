@@ -158,6 +158,24 @@ def _info(args: argparse.Namespace) -> int:
     return 0 if rep.ok else 1
 
 
+def _render(args: argparse.Namespace) -> int:
+    from .render_html import render_html
+
+    path = Path(args.input)
+    if not path.exists():
+        print(f"파일을 찾을 수 없습니다: {path}", file=sys.stderr)
+        return 2
+    html = render_html(str(path), fragment=args.fragment, title=args.title)
+    if args.output:
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(html, encoding="utf-8")
+        print(f"렌더: {out}")
+    else:
+        sys.stdout.write(html)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hwpx", description="한글(HWPX) 문서 생성·렌더 CLI")
     parser.add_argument("--version", action="version", version=f"hwpx {__version__}")
@@ -185,6 +203,13 @@ def build_parser() -> argparse.ArgumentParser:
     i = sub.add_parser("info", help="기존 .hwpx 검증/요약")
     i.add_argument("input", help=".hwpx 파일")
     i.set_defaults(func=_info)
+
+    r = sub.add_parser("render", help="기존 .hwpx 를 HTML 로 렌더링(표·서식 보존)")
+    r.add_argument("input", help=".hwpx 파일")
+    r.add_argument("-o", "--output", help="출력 .html 경로(생략 시 stdout)")
+    r.add_argument("--fragment", action="store_true", help="<html> 래퍼 없이 본문만(webview 용)")
+    r.add_argument("-t", "--title", help="문서 제목")
+    r.set_defaults(func=_render)
 
     return parser
 

@@ -16,9 +16,13 @@ dependencies = [
 dev = [
     "pytest>=8",
 ]
+mcp = [
+    "mcp>=1.27.2",
+]
 
 [project.scripts]
 hwpx = "open_hwpx.cli:main"
+open-hwpx-mcp = "open_hwpx.mcp_server:main"
 
 [build-system]
 requires = ["uv_build>=0.11.6,<0.12.0"]

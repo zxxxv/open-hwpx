@@ -47,6 +47,9 @@ from .styles import (
     get_theme,
     preset_names,
 )
+from .fonts import embed_font, register_font_file, registered_fonts
+from .read import RDocument, load, load_document, read_document
+from .render_html import render_html
 
 __version__ = "0.1.0"
 
@@ -81,4 +84,14 @@ __all__ = [
     "DEFAULT_THEME",
     "get_theme",
     "preset_names",
+    # 읽기/렌더
+    "load",
+    "load_document",
+    "read_document",
+    "RDocument",
+    "render_html",
+    # 폰트
+    "register_font_file",
+    "registered_fonts",
+    "embed_font",
 ]

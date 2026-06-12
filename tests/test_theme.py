@@ -31,13 +31,18 @@ def test_stylesheet_char_id_dedup():
     assert a != c
 
 
-def test_unregistered_font_warns_and_falls_back():
+def test_unregistered_font_is_registered_not_dropped():
+    # 미등록 폰트는 이제 헤더 fontface 에 자동 등록된다(과거: 경고+기본 대체).
+    from lxml import etree
+
     doc = HwpxDocument.new()
     ss = StyleSheet(GOV_KOREAN, doc)
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        ss.char_id(font="존재하지않는폰트", size=11)
-    assert any("등록되어 있지 않" in str(w.message) for w in caught)
+        ss.char_id(font="나눔손글씨", size=11)
+    assert not any("기본 폰트로 대체" in str(w.message) for w in caught)
+    faces = {f.get("face") for f in doc.headers[0].element.iter() if etree.QName(f).localname == "font"}
+    assert "나눔손글씨" in faces
 
 
 def test_outline_para_indents_per_level():

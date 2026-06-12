@@ -75,14 +75,65 @@ class StyleSheet:
     def _resolve_font(self, name: str | None) -> str | None:
         if name is None or name in self._available_fonts:
             return name
-        if name not in self._warned_fonts:
+        # 미등록 폰트는 헤더 fontface 에 '이름'으로 등록한다 → 뷰어에 그 폰트가 있으면 적용된다.
+        # (바이너리 임베드=문서에 폰트 동봉은 별도 작업; OFL 폰트 파일이 있어야 한다.)
+        if self._register_font_face(name):
+            self._available_fonts.add(name)
+            return name
+        if name not in self._warned_fonts:  # 등록 실패 시에만 경고 후 기본 대체
             warnings.warn(
-                f"폰트 '{name}'가 문서에 등록되어 있지 않아 기본 폰트로 대체됩니다. "
+                f"폰트 '{name}'를 등록하지 못해 기본 폰트로 대체됩니다. "
                 f"사용 가능 폰트: {sorted(self._available_fonts)}",
                 stacklevel=3,
             )
             self._warned_fonts.add(name)
         return None
+
+    def _register_font_face(self, name: str) -> bool:
+        """헤더의 모든 ``<fontface>`` 에 ``<font face=name>`` 을 추가해 폰트를 등록한다.
+
+        register_font_file 로 등록된 폰트 파일이 있으면 바이너리를 동봉(``isEmbedded="1"``)해
+        이식성을 확보하고, 없으면 이름만 등록(``isEmbedded="0"``)한다.
+        """
+        element = getattr(self._header, "element", None)
+        if element is None:
+            return False
+        from lxml import etree
+
+        from ..fonts import embed_font_binary, font_file_for
+
+        hh = "{http://www.hancom.co.kr/hwpml/2011/head}"
+        faces = element.findall(f".//{hh}fontface")
+        if not faces:
+            return False
+
+        embed_ref: str | None = None
+        path = font_file_for(name)
+        if path:
+            try:
+                from pathlib import Path
+
+                data = Path(path).read_bytes()
+                fmt = Path(path).suffix.lstrip(".").lower() or "ttf"
+                embed_ref = embed_font_binary(self.doc, data, fmt)
+            except Exception:  # pragma: no cover - 파일 문제 시 이름만 등록으로 폴백
+                embed_ref = None
+
+        for face in faces:
+            fonts = face.findall(f"{hh}font")
+            if any(f.get("face") == name for f in fonts):
+                continue
+            font_el = etree.SubElement(face, f"{hh}font")
+            font_el.set("id", str(len(fonts)))
+            font_el.set("face", name)
+            font_el.set("type", "TTF")
+            if embed_ref:
+                font_el.set("isEmbedded", "1")
+                font_el.set("binaryItemIDRef", embed_ref)
+            else:
+                font_el.set("isEmbedded", "0")
+            face.set("fontCnt", str(len(fonts) + 1))
+        return True
 
     # ---- 글자 모양 -----------------------------------------------------------
     def char_id(
