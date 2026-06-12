@@ -1,0 +1,60 @@
+{
+  "schema": "open_hwpx.report.v1",
+  "theme": { "name": "korean_gov_outline" },
+  "metadata": {
+    "title": "2026년 AI 융합교육 추진계획",
+    "organization": "○○부 기획조정실",
+    "date": "2026-06-04"
+  },
+  "page": {
+    "size": "A4",
+    "orientation": "PORTRAIT",
+    "margins": { "top_mm": 20, "bottom_mm": 15, "left_mm": 20, "right_mm": 20 }
+  },
+  "footer": { "blocks": [ { "type": "page_number" } ] },
+  "front_matter": [ { "type": "toc", "title": "목  차", "max_level": 3 } ],
+  "chapters": [
+    {
+      "title": "추진 배경",
+      "md": "본 계획은 **AI 융합교육** 확산을 통해 미래 인재를 양성하는 것을 목표로 한다.\n\n- 디지털 전환 가속\n- 현장의 교육 수요 증가\n- 관련 법·제도 정비 필요"
+    },
+    {
+      "title": "세부 추진계획",
+      "body": [
+        { "type": "paragraph", "runs": [ { "text": "연차별로 단계적으로 추진한다." } ] }
+      ],
+      "chapters": [
+        {
+          "title": "단계별 로드맵",
+          "body": [
+            {
+              "type": "table",
+              "header": ["구분", "주요 내용", "기한"],
+              "column_widths": [2, 4, 2],
+              "merges": ["A2:A3"],
+              "caption": "<표 1> 단계별 추진 일정",
+              "rows": [
+                ["1단계", "기반 구축 및 교원 연수", "2026.03"],
+                ["1단계", "시범 학교 운영", "2026.06"],
+                ["2단계", "전면 확산", "2026.12"]
+              ]
+            }
+          ]
+        },
+        {
+          "title": "소요 예산",
+          "body": [
+            { "type": "numbered", "items": ["인건비 12억원", "사업운영비 30억원", "기자재비 8억원"] }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "기대 효과",
+      "body": [
+        { "type": "paragraph", "runs": [ { "text": "교육 격차 완화와 미래 역량 강화에 기여할 것으로 기대된다." } ] },
+        { "type": "page_break" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+[project]
+name = "open-hwpx"
+version = "0.1.0"
+description = "한글(HWPX) 문서를 쉽게 생성·렌더링·편집하는 컴포넌트 기반 모듈 (python-hwpx 상위 래퍼)"
+readme = "README.md"
+authors = [
+    { name = "zion", email = "jaewoongchoi46@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "markdown-it-py>=4.2.0",
+    "python-hwpx>=2.10,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[project.scripts]
+hwpx = "open_hwpx.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.6,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "open_hwpx"
+module-root = "src"

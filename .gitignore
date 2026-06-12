@@ -1,0 +1,17 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# 생성된 보고서 산출물
+examples/out/
+*.hwpx
+
+# 임시 작업
+scratch/
+
+CLAUDE.md
